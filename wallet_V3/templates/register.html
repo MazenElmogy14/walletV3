@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنشاء حساب - محفظتي المالية</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f0f2f5 0%, #c3cfe2 100%);
+            font-family: 'Cairo', sans-serif;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .register-card {
+            background: white;
+            border-radius: 25px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+            width: 100%;
+            max-width: 450px;
+            border: none;
+        }
+        .register-header {
+            background: linear-gradient(135deg, #198754 0%, #105a39 100%); /* لون أخضر للحساب الجديد */
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .register-body { padding: 40px; }
+        .form-control {
+            border-radius: 10px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            background-color: #f8f9fa;
+        }
+        .btn-register {
+            border-radius: 10px;
+            padding: 12px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #198754 0%, #105a39 100%);
+            border: none;
+            transition: 0.3s;
+        }
+        .btn-register:hover { opacity: 0.9; transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+    <div class="card register-card">
+        <div class="register-header">
+            <h4 class="fw-bold mb-1">إنشاء حساب جديد</h4>
+            <p class="mb-0 small opacity-75">ابدأ إدارة مديونياتك بذكاء اليوم</p>
+        </div>
+        <div class="register-body">
+            <form action="/register" method="POST">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted">اسم المستخدم</label>
+                    <input type="text" name="username" class="form-control" placeholder="اختر اسماً مميزاً" required>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label small fw-bold text-muted">كلمة المرور</label>
+                    <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-success btn-register w-100 mb-3">إتمام التسجيل</button>
+                <div class="text-center small mt-4">
+                    <span class="text-muted">لديك حساب بالفعل؟</span>
+                    <a href="/login" class="text-success fw-bold text-decoration-none">تسجيل الدخول</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

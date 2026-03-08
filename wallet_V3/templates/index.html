@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>محفظتي المالية - الإدارة الذكية</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { background-color: #f0f2f5; font-family: 'Cairo', sans-serif; color: #333; }
+        .top-bar { background: linear-gradient(135deg, #0d6efd 0%, #0040a1 100%); color: white; padding: 25px; border-radius: 0 0 30px 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .stat-card { background: white; border-radius: 15px; padding: 15px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-bottom: 4px solid #0d6efd; }
+        
+        .nav-pills .nav-link { background: white; color: #495057; margin: 5px; border-radius: 12px; font-weight: 600; transition: all 0.3s ease; border: 1px solid #eee; display: flex; align-items: center; }
+        .nav-pills .nav-link.active { background-color: #0d6efd !important; color: white !important; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3); border-color: #0d6efd; }
+        
+        .bank-logo-circle {
+            width: 32px; height: 32px; border-radius: 50%; background-color: #fff;
+            display: flex; align-items: center; justify-content: center; overflow: hidden;
+            border: 1px solid #ddd; margin-left: 10px; flex-shrink: 0;
+        }
+        .bank-logo-circle img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .table-container { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+        .bank-summary-card { background: white; border-radius: 15px; padding: 20px; transition: 0.3s; border: 1px solid #eee; text-decoration: none; color: inherit; display: block; position: relative; }
+        .bank-summary-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-color: #0d6efd; }
+        
+        .action-btns { position: absolute; top: 10px; left: 10px; z-index: 10; display: flex; gap: 5px; }
+        .btn-mini { padding: 2px 8px; font-size: 0.75rem; border-radius: 6px; text-decoration: none; background: white; border: 1px solid #eee; }
+        
+        .note-log-box { background: #f8f9fa; border-radius: 10px; padding: 12px; font-size: 0.85rem; max-height: 150px; overflow-y: auto; border-right: 4px solid #17a2b8; white-space: pre-line; }
+        .future-row { background-color: #fff9db !important; border-right: 5px solid #fcc419; }
+    </style>
+</head>
+<body class="container pb-5">
+
+    <div class="top-bar d-flex justify-content-between align-items-center shadow">
+        <div>
+            <h4 class="fw-bold mb-1">أهلاً، {{ name }} 👋</h4>
+            <p class="mb-0 opacity-75 small">مرحباً بك في نظام إدارة مديونياتك</p>
+        </div>
+        <div class="text-start">
+            <a href="{{ url_for('logout') }}" class="btn btn-light btn-sm rounded-pill px-3 fw-bold text-danger">تسجيل الخروج</a>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4 text-center">
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <small class="text-muted d-block small">المطلوب الآن</small>
+                <span class="fs-5 fw-bold text-danger">{{ "{:,.2f}".format(grand_monthly_total) }} ج.م</span>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card" style="border-color: #28a745;">
+                <small class="text-muted d-block small">إجمالي المديونية</small>
+                <span class="fs-5 fw-bold text-success">{{ "{:,.2f}".format(grand_full_total) }} ج.م</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex align-items-center mb-4 overflow-auto pb-2">
+        <ul class="nav nav-pills flex-nowrap">
+            <li class="nav-item">
+                <a class="nav-link {% if selected_card == 'all' %}active{% endif %}" href="{{ url_for('index', card='all') }}">
+                    <div class="bank-logo-circle bg-light">📊</div>
+                    نظرة عامة
+                </a>
+            </li>
+            {% for card in card_list %}
+            <li class="nav-item">
+                <a class="nav-link {% if card == selected_card %}active{% endif %}" href="{{ url_for('index', card=card) }}">
+                    <div class="bank-logo-circle">
+                        <img src="https://www.google.com/s2/favicons?sz=64&domain={% if 'cib' in card.lower() %}cib.eg{% elif 'qnb' in card.lower() %}qnb.com.eg{% elif 'voda' in card.lower() %}vodafone.com.eg{% elif 'misr' in card.lower() %}banquemisr.com{% elif 'ahli' in card.lower() %}nbe.com.eg{% else %}{{ card.lower() }}.com{% endif %}" 
+                             onerror="this.src='https://ui-avatars.com/api/?name={{ card }}&background=random&color=fff&rounded=true'">
+                    </div>
+                    {{ card }}
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+        <button class="btn btn-primary ms-3 shadow-sm rounded-circle" style="width: 40px; height: 40px; flex-shrink:0;" data-bs-toggle="modal" data-bs-target="#addBankModal">+</button>
+    </div>
+
+    {% if selected_card == 'all' %}
+        <div class="row g-4">
+            {% for bank in card_list %}
+                <div class="col-md-4 position-relative">
+                    <div class="action-btns">
+                        <button class="btn btn-mini text-primary" data-bs-toggle="modal" data-bs-target="#editBank{{ loop.index }}">✏️</button>
+                        <a href="{{ url_for('delete_card', card_name=bank) }}" class="btn btn-mini text-danger" onclick="return confirm('حذف البنك وكل مديونياته؟')">🗑️</a>
+                    </div>
+                    
+                    <a href="{{ url_for('index', card=bank) }}" class="bank-summary-card shadow-sm">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bank-logo-circle" style="width: 45px; height: 45px;">
+                                <img src="https://www.google.com/s2/favicons?sz=64&domain={% if 'cib' in bank.lower() %}cib.eg{% elif 'qnb' in bank.lower() %}qnb.com.eg{% elif 'voda' in bank.lower() %}vodafone.com.eg{% elif 'misr' in bank.lower() %}banquemisr.com{% elif 'ahli' in bank.lower() %}nbe.com.eg{% else %}{{ bank.lower() }}.com{% endif %}" 
+                                     onerror="this.src='https://ui-avatars.com/api/?name={{ bank }}&background=random&color=fff&rounded=true'">
+                            </div>
+                            <h5 class="fw-bold text-primary mb-0 ms-2">{{ bank }}</h5>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted small">مطلوب الآن:</span>
+                            <span class="fw-bold text-danger">{{ "{:,.2f}".format(bank_stats[bank].monthly) if bank_stats else "0.00" }} ج.م</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted small">المديونية الكلية:</span>
+                            <span class="fw-bold text-dark">{{ "{:,.2f}".format(bank_stats[bank].total) if bank_stats else "0.00" }} ج.م</span>
+                        </div>
+                    </a>
+
+                    <div class="modal fade" id="editBank{{ loop.index }}" tabindex="-1">
+                        <div class="modal-dialog modal-dialog-centered modal-sm">
+                            <div class="modal-content rounded-4 p-4 text-center">
+                                <h6 class="fw-bold mb-3">تعديل اسم البنك</h6>
+                                <form action="{{ url_for('edit_card', old_name=bank) }}" method="POST">
+                                    <input type="text" name="new_name" class="form-control mb-3" value="{{ bank }}" required>
+                                    <button type="submit" class="btn btn-primary w-100 rounded-pill">حفظ</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="table-container mb-4">
+            <h6 class="fw-bold text-primary mb-3">➕ إضافة معاملة لـ {{ selected_card }}</h6>
+            <form action="{{ url_for('add') }}" method="POST" class="row g-2">
+                <input type="hidden" name="card_select" value="{{ selected_card }}">
+                <div class="col-md-3"><input type="text" name="title" class="form-control" placeholder="البيان" required></div>
+                <div class="col-md-2"><input type="number" step="0.01" name="amount" class="form-control" placeholder="المبلغ" required></div>
+                <div class="col-md-2">
+                    <select name="debt_type" class="form-select" onchange="document.getElementById('mDiv').style.display=(this.value=='قسط'?'block':'none')">
+                        <option value="دفع عادي">كاش</option>
+                        <option value="قسط">قسط</option>
+                    </select>
+                </div>
+                <div class="col-md-1" id="mDiv" style="display:none;"><input type="number" name="months" class="form-control" value="1"></div>
+                <div class="col-md-2"><input type="date" name="date_added" class="form-control" value="{{ today_date }}"></div>
+                <div class="col-md-2"><button type="submit" class="btn btn-primary w-100 fw-bold">حفظ</button></div>
+            </form>
+        </div>
+
+        <div class="table-container">
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>العملية</th>
+                            <th>المتبقي</th>
+                            <th>المطلوب</th>
+                            <th class="text-center">إجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in debts %}
+                            {% set is_future = d.date_added >= first_day_this_month %}
+                            {% if not is_future %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold">{{ d.title }}</div>
+                                        <div class="text-muted small" style="font-size: 0.7rem;">{{ d.date_added }} | {{ d.debt_type }}</div>
+                                    </td>
+                                    <td class="fw-bold">{{ "{:,.2f}".format(d.amount) }}</td>
+                                    <td class="text-danger fw-bold">{{ "{:,.2f}".format((d.original_amount / d.months) if d.debt_type == 'قسط' else d.amount) }}</td>
+                                    <td class="text-center">
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-success px-3" data-bs-toggle="modal" data-bs-target="#pay{{ d.id }}">سداد</button>
+                                            <button class="btn btn-sm btn-info text-white" data-bs-toggle="modal" data-bs-target="#log{{ d.id }}">ℹ️</button>
+                                            <a href="{{ url_for('edit', id=d.id) }}" class="btn btn-sm btn-light">✏️</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr class="future-row">
+                                    <td colspan="3"><span class="badge bg-warning text-dark me-2">مُرحل</span> <strong>{{ d.title }}</strong> (يبدأ في {{ d.date_added }})</td>
+                                    <td class="text-center"><a href="{{ url_for('delete', id=d.id) }}" class="text-danger small text-decoration-none" onclick="return confirm('حذف؟')">🗑️ حذف</a></td>
+                                </tr>
+                            {% endif %}
+
+                            <div class="modal fade" id="pay{{ d.id }}" tabindex="-1">
+                                <div class="modal-dialog modal-dialog-centered modal-sm">
+                                    <div class="modal-content rounded-4 border-0 shadow p-4 text-center">
+                                        <h6 class="fw-bold mb-3">سداد لـ {{ d.title }}</h6>
+                                        <form action="{{ url_for('pay_debt', id=d.id) }}" method="POST">
+                                            <input type="number" step="0.01" name="paid_amount" class="form-control mb-2 text-center" value="{{ (d.original_amount / d.months) if d.debt_type == 'قسط' else d.amount }}" required>
+                                            <input type="text" name="payment_comment" class="form-control mb-3" placeholder="ملاحظة (اختياري)">
+                                            <button type="submit" class="btn btn-success w-100 rounded-pill fw-bold">تأكيد</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="modal fade" id="log{{ d.id }}" tabindex="-1">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content border-0 rounded-4 shadow">
+                                        <div class="modal-header bg-light">
+                                            <h6 class="fw-bold mb-0">🔍 تفاصيل المعاملة</h6>
+                                            <button type="button" class="btn-close ms-0 me-auto" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body p-4">
+                                            <div class="d-flex justify-content-between border-bottom pb-2 mb-2"><span>البيان:</span> <strong>{{ d.title }}</strong></div>
+                                            <div class="d-flex justify-content-between border-bottom pb-2 mb-2"><span>المبلغ الأصلي:</span> <strong>{{ "{:,.2f}".format(d.original_amount) }} ج.م</strong></div>
+                                            <div class="d-flex justify-content-between border-bottom pb-2 mb-2"><span>المتبقي:</span> <strong class="text-danger">{{ "{:,.2f}".format(d.amount) }} ج.م</strong></div>
+                                            <div class="d-flex justify-content-between border-bottom pb-2 mb-2"><span>تاريخ الإضافة:</span> <strong>{{ d.date_added }}</strong></div>
+                                            <div class="fw-bold small text-info mt-3 mb-2">📜 سجل السداد:</div>
+                                            <div class="note-log-box">{{ d.payment_note or "لا يوجد عمليات سداد." }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="modal fade" id="addBankModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content rounded-4 border-0 shadow p-4 text-center">
+                <h6 class="fw-bold mb-3">إضافة بنك جديد</h6>
+                <form action="/add_card" method="POST">
+                    <input type="text" name="new_card_name" class="form-control mb-3" placeholder="مثلاً: CIB أو فودافون" required>
+                    <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold">إضافة</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
